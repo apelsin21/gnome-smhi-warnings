@@ -2,7 +2,6 @@ import "@girs/gjs"; // For global types like `log()`
 import St from "@girs/st-16";
 import "@girs/soup-3.0";
 
-import Soup from "gi://Soup?version=3.0";
 import "@girs/gnome-shell/extensions/global"; // For global shell types
 import {
 	Extension,
@@ -10,9 +9,11 @@ import {
 	type ConsoleLike,
 } from "@girs/gnome-shell/extensions/extension";
 import * as PanelMenu from "@girs/gnome-shell/ui/panelMenu";
+// import * as messageTray from "@girs/gnome-shell/ui/messageTray";
 import * as Main from "@girs/gnome-shell/ui/main";
 
 import { get } from "./http";
+import { Response, WarningLevel } from "./types";
 
 const smhiWarningsURL =
 	"https://opendata-download-warnings.smhi.se/ibww/api/version/1/warning.json";
@@ -27,25 +28,105 @@ const warningCodeToStyleClassMap: Record<WarningCode, string> = {
 	Red: "red-warning-icon",
 };
 
-const warningCodeSeverityMap: Record<WarningCode, number> = {
-	Yellow: 1,
-	Orange: 2,
-	Red: 3,
+const warningLevelSeverityMap: Record<WarningLevel, number> = {
+	MESSAGE: 0,
+	YELLOW: 1,
+	ORANGE: 2,
+	RED: 3,
+};
+const severityWarningLevelMap: Record<number, WarningLevel> = {
+	0: "MESSAGE",
+	1: "YELLOW",
+	2: "ORANGE",
+	3: "RED",
 };
 
 type State =
+	| "Init"
 	| "NetworkError"
 	| "NoWarning"
 	| "YellowWarning"
 	| "OrangeWarning"
 	| "RedWarning";
 
-const getStateFromApi = (apiUrl: string): State => {};
+const getHighestWarningLevelFromResponse = (
+	response: Response,
+): WarningLevel => {
+	let reachedSeverity = warningLevelSeverityMap.MESSAGE;
+
+	for (const warning of response) {
+		for (const area of warning.warningAreas) {
+			const severity = warningLevelSeverityMap[area.warningLevel.code];
+
+			if (severity > reachedSeverity) {
+				reachedSeverity = severity;
+			}
+		}
+	}
+
+	const reachedWarningLevel = severityWarningLevelMap[reachedSeverity];
+
+	return reachedWarningLevel ?? "MESSAGE";
+};
+
+const getStateFromResponse = (response: Response): State => {
+	if (response.length) {
+		const highestWarningLevel = getHighestWarningLevelFromResponse(response);
+
+		switch (highestWarningLevel) {
+			case "MESSAGE":
+				return "NoWarning";
+			case "YELLOW":
+				return "YellowWarning";
+			case "ORANGE":
+				return "OrangeWarning";
+			case "RED":
+				return "RedWarning";
+			default:
+				return "NetworkError";
+		}
+	}
+
+	return "NoWarning";
+};
 
 export let console: ConsoleLike | null = null;
 
+const stateIcons: Record<State, St.Icon> = {
+	Init: new St.Icon({
+		icon_name: "arrows-loop-tall-symbolic",
+		style_class: "system-status-icon",
+	}),
+	NetworkError: new St.Icon({
+		icon_name: "offline-globe-symbolic",
+		style_class: "system-status-icon",
+	}),
+	NoWarning: new St.Icon({
+		styleClass: "no-warning-icon",
+	}),
+	YellowWarning: new St.Icon({
+		styleClass: "yellow-warning-icon",
+	}),
+	OrangeWarning: new St.Icon({
+		styleClass: "orange-warning-icon",
+	}),
+	RedWarning: new St.Icon({
+		styleClass: "red-warning-icon",
+	}),
+};
+
 export default class SMHIWarnings extends Extension {
 	private _indicator: PanelMenu.Button | null = null;
+	private _currentState: State = "Init";
+
+	private updateState(newState: State) {
+		console?.log(`updating with new state: ${newState}`);
+
+		if (newState !== this._currentState && this._indicator) {
+			this._indicator.remove_all_children();
+			this._indicator.add_child(stateIcons[newState]);
+		}
+	}
 
 	override enable() {
 		if (this._indicator !== null) {
@@ -55,19 +136,7 @@ export default class SMHIWarnings extends Extension {
 		// Create a panel button
 		this._indicator = new PanelMenu.Button(0.0, this.metadata.name, false);
 
-		const warningIcons: Record<WarningCode, St.Icon> = {
-			Yellow: new St.Icon({
-				styleClass: "yellow-warning-icon",
-			}),
-			Orange: new St.Icon({
-				styleClass: "orange-warning-icon",
-			}),
-			Red: new St.Icon({
-				styleClass: "red-warning-icon",
-			}),
-		};
-
-		this._indicator.add_child(warningIcons.Yellow);
+		this._indicator.add_child(stateIcons.Init);
 
 		// Add the indicator to the panel
 		Main.panel.addToStatusArea(this.uuid, this._indicator);
@@ -76,18 +145,24 @@ export default class SMHIWarnings extends Extension {
 
 		//Is called on enable extension
 		console.log("SMHIWarnings is enabled");
-		console.log("Det uppdateras igen 1826");
+		console.log("Det uppdateras igen 1933");
 
 		get(smhiWarningsURL)
 			.then((data) => {
-				console?.log(`got data: ${JSON.stringify(data)}`);
-
 				//Here update state and stuff.
-				this._indicator?.remove_child(warningIcons.Yellow);
-				this._indicator?.add_child(warningIcons.Red);
+				const newState = getStateFromResponse(data);
+
+				this.updateState(newState);
+
+				// this._indicator?.remove_child(warningIcons.Yellow);
+				// this._indicator?.add_child(warningIcons.Red);
+
+				// // Main.notify("SMHI Warning", JSON.stringify(data));
+				// Main.notifyError("SMHI Error", "Error bodfy");
 			})
 			.catch((e) => {
 				console?.log(`exception ${e}`);
+				this._currentState = "NetworkError";
 			});
 	}
 
