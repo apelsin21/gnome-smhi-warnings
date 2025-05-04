@@ -1,0 +1,18 @@
+.yellow-warning-icon {
+    background-image: url("yellow-weather-warning-24x24.svg");
+    background-size: 24px;
+    height: 24px;
+    width: 24px;
+}
+.orange-warning-icon {
+    background-image: url("orange-weather-warning-24x24.svg");
+    background-size: 24px;
+    height: 24px;
+    width: 24px;
+}
+.red-warning-icon {
+    background-image: url("red-weather-warning-24x24.svg");
+    background-size: 24px;
+    height: 24px;
+    width: 24px;
+}

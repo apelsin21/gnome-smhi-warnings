@@ -1,0 +1,12 @@
+{
+    "extends": "@tsconfig/strictest/tsconfig.json",
+    "compilerOptions": {
+        "lib": ["ESNext"],
+        "types": ["@girs/gjs", "@girs/gjs/dom", "@girs/soup-3.0"],
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "Bundler"
+    },
+    "include": ["src"],
+    "files": ["src/*.ts"]
+}

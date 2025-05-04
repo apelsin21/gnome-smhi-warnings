@@ -1,0 +1,31 @@
+{
+  "name": "gnome-smhi-warnings",
+  "version": "0.0.1",
+  "description": "A GNOME extension that shows weather warnings from SMHI",
+  "type": "module",
+  "main": "dist/extension.js",
+  "private": true,
+  "scripts": {
+    "clear": "rm -rf dist",
+    "build:app": "node esbuild.js",
+    "build": "npm run clear && npm run build:app",
+    "validate": "tsc --noEmit",
+    "dev": "npm run build && gnome-extensions install --force gnome-smhi-warnings.zip && ./start_nested_gnome.sh"
+  },
+  "author": "Axel Vestin <axel.vestin123@gmail.com>",
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@tsconfig/strictest": "^2.0.5",
+    "adm-zip": "^0.5.16",
+    "esbuild": "^0.25.3",
+    "typescript": "5.8.3"
+  },
+  "dependencies": {
+    "@girs/gjs": "^4.0.0-beta.23",
+    "@girs/gnome-shell": "^48.0.2",
+    "@girs/gobject-2.0": "^2.84.0-4.0.0-beta.23",
+    "@girs/st-16": "^16.0.0-4.0.0-beta.23",
+    "@girs/soup-3.0": "3.6.4-4.0.0-beta.23"
+  }
+}

@@ -1,0 +1,8 @@
+{
+    "name": "SMHI Warnings",
+    "description": "Gnome extension to show warnings from SMHI",
+    "uuid": "gnome-smhi-warnings",
+    "settings-schema": "org.gnome.shell.extensions.gnome-smhi-warnings",
+    "shell-version": ["48.1"],
+    "url": "https://github.com/apelsin21/gnome-smhi-warnings"
+}
