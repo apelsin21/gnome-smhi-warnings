@@ -13,20 +13,10 @@ import * as PanelMenu from "@girs/gnome-shell/ui/panelMenu";
 import * as Main from "@girs/gnome-shell/ui/main";
 
 import { get } from "./http";
-import { Response, WarningLevel } from "./types";
+import type { Response, WarningLevel } from "./types";
 
 const smhiWarningsURL =
 	"https://opendata-download-warnings.smhi.se/ibww/api/version/1/warning.json";
-
-const fetchSMHIWarnings = (url: string) => {};
-
-type WarningCode = "Yellow" | "Orange" | "Red";
-
-const warningCodeToStyleClassMap: Record<WarningCode, string> = {
-	Yellow: "yellow-warning-icon",
-	Orange: "orange-warning-icon",
-	Red: "red-warning-icon",
-};
 
 const warningLevelSeverityMap: Record<WarningLevel, number> = {
 	MESSAGE: 0,
